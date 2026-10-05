@@ -44,9 +44,10 @@ export function EmptyState({ title, text, actionLabel, to }) {
 
 const COLORS = {
   pending: 'bg-amber-100 text-amber-800',
+  confirmed: 'bg-sky-100 text-sky-800',
+  preparing: 'bg-indigo-100 text-indigo-800',
+  out_for_delivery: 'bg-violet-100 text-violet-800',
   paid: 'bg-sky-100 text-sky-800',
-  processing: 'bg-indigo-100 text-indigo-800',
-  shipped: 'bg-violet-100 text-violet-800',
   delivered: 'bg-emerald-100 text-emerald-800',
   cancelled: 'bg-slate-200 text-slate-700',
   unpaid: 'bg-amber-100 text-amber-800',
@@ -58,7 +59,7 @@ const COLORS = {
 export function StatusBadge({ status }) {
   return (
     <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${COLORS[status] || 'bg-slate-100'}`}>
-      {status}
+      {String(status).replace(/_/g, ' ')}
     </span>
   );
 }

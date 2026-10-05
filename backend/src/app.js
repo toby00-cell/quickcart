@@ -24,6 +24,7 @@ const authLimiter = rateLimit({
 app.get('/api/health', (req, res) => res.json({ success: true, message: 'API is running', data: null }));
 
 app.use('/api/auth', authLimiter, require('./routes/auth.routes'));
+app.use('/api/locations', require('./routes/location.routes'));
 app.use('/api/categories', require('./routes/category.routes'));
 app.use('/api/products', require('./routes/product.routes'));
 app.use('/api/cart', require('./routes/cart.routes'));

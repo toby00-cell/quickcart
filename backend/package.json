@@ -1,7 +1,7 @@
 {
   "name": "shop-backend",
   "version": "1.0.0",
-  "description": "E-Commerce Order System API (TS Academy capstone MVP)",
+  "description": "Naija Delights food ordering API (TS Academy capstone MVP)",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",

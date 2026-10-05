@@ -48,12 +48,12 @@ export default function Shop() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
-      <h1 className="text-3xl font-extrabold">Shop</h1>
+      <h1 className="text-3xl font-extrabold">Menu</h1>
 
       <div className="card mt-6 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-5">
-        <input className="input lg:col-span-2" placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} />
+        <input className="input lg:col-span-2" placeholder="Search dishes..." value={search} onChange={(e) => setSearch(e.target.value)} />
         <select className="input" value={category} onChange={(e) => update({ category: e.target.value })}>
-          <option value="">All categories</option>
+          <option value="">All regions</option>
           {categories.data?.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
         </select>
         <select className="input" value={sort} onChange={(e) => update({ sort: e.target.value === 'newest' ? '' : e.target.value })}>
@@ -75,12 +75,12 @@ export default function Shop() {
           <ErrorMessage message={products.error} onRetry={products.reload} />
         ) : products.data.items.length === 0 ? (
           <div>
-            <EmptyState title="No products found" text="Try a different search or clear the filters." />
+            <EmptyState title="No dishes found" text="Try a different search or clear the filters." />
             <div className="mt-4 text-center"><button className="btn-secondary" onClick={clear}>Clear filters</button></div>
           </div>
         ) : (
           <>
-            <p className="mb-3 text-sm text-slate-500">{products.data.pagination.total} product(s)</p>
+            <p className="mb-3 text-sm text-slate-500">{products.data.pagination.total} dish(es)</p>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
               {products.data.items.map((p) => <ProductCard key={p._id} product={p} />)}
             </div>

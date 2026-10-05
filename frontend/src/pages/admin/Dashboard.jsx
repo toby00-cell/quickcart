@@ -12,7 +12,7 @@ export default function Dashboard() {
     ['Revenue (paid)', money(data.revenue)],
     ['Orders', data.orders],
     ['Customers', data.customers],
-    ['Products', data.products],
+    ['Dishes', data.products],
   ];
   return (
     <div>

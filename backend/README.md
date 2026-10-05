@@ -1,15 +1,16 @@
-# E-Commerce Order System — Backend API
+# Naija Delights — Backend API
 
-Node.js + Express + MongoDB (Mongoose). Part of the TS Academy capstone MVP.
+Food ordering and delivery API. Node.js + Express + MongoDB (Mongoose). Part of the TS Academy capstone MVP.
 
-**Features:** register/login (JWT, bcrypt), customer/admin roles, categories and products (CRUD, search, filter, pagination), cart, checkout to order with atomic stock reservation, simulated payments, order tracking, admin order management and stats.
+**Features:** register/login (JWT, bcrypt), customer/admin roles, regions (categories) and dishes (CRUD, search, filter, pagination), cart, checkout with Nigerian state/LGA delivery and a delivery fee, atomic portion reservation, simulated payments, public order tracking by code, admin order management and stats.
 
 ## Setup
 
 ```bash
 npm install
 cp .env.example .env      # then fill in values
-npm run seed              # sample categories, products and an admin account
+npm run seed              # menu (Yoruba, Igbo, Hausa dishes) and an admin account
+npm run seed -- --reset   # same, and also clears orders, payments and carts
 npm run dev               # http://localhost:5000
 npm test                  # Jest + Supertest (uses an in-memory MongoDB)
 ```
@@ -30,12 +31,13 @@ npm test                  # Jest + Supertest (uses an in-memory MongoDB)
 ```
 src/
 ├── config/        db connection, env check
+├── data/          locations.json (37 states, 759 LGAs)
 ├── controllers/   request handlers
 ├── middleware/    auth, validation, error handling
 ├── models/        User, Category, Product, Cart, Order, Payment
 ├── routes/        route definitions
 ├── services/      business logic (auth, cart, orders, payments)
-├── utils/         AppError, asyncHandler, apiResponse, pagination
+├── utils/         AppError, asyncHandler, apiResponse, pagination, delivery (fee + location check)
 ├── validators/    Zod schemas
 ├── app.js
 └── server.js
@@ -77,9 +79,9 @@ Errors: 400 invalid input, 401 `Invalid email or password`, 409 `An account with
 ### Products
 | Method | Endpoint | Purpose | Auth | Body / Params |
 |---|---|---|---|---|
-| GET | `/api/products` | List with search, filter, pagination | Public | Query: `search`, `category`, `minPrice`, `maxPrice`, `sort` (`newest`, `price_asc`, `price_desc`, `name`), `page`, `limit` |
+| GET | `/api/products` | List dishes with search, filter, pagination | Public | Query: `search`, `category`, `minPrice`, `maxPrice`, `sort` (`newest`, `price_asc`, `price_desc`, `name`), `page`, `limit` |
 | GET | `/api/products/:id` | Product details | Public | `:id` |
-| POST | `/api/products` | Create | Admin | `name`, `price` (> 0), `stock` (int ≥ 0), `category` (id), `description?`, `imageUrl?`, `isActive?` |
+| POST | `/api/products` | Create | Admin | `name`, `price` (> 0), `stock` (portions available, int ≥ 0), `category` (region id), `description?`, `icon?` (emoji), `imageUrl?`, `isActive?` |
 | PATCH | `/api/products/:id` | Update | Admin | any of the create fields |
 | DELETE | `/api/products/:id` | Delete | Admin | `:id` |
 
@@ -98,19 +100,29 @@ Errors: 400 invalid id/body, 403 not admin, 404 `Product not found`.
 Success: `data: { items: [{ product, quantity, subtotal }], totalItems, totalAmount }`
 Errors: 400 `Only 3 unit(s) of "X" available`, 404 `Product not found` / `Item not found in cart`.
 
+### Locations
+| Method | Endpoint | Purpose | Auth |
+|---|---|---|---|
+| GET | `/api/locations` | Delivery states with their LGAs, and the delivery fee rule | Public |
+
+Success: `data: { states: { "Lagos": ["Agege", ...], ... }, fees: { "Lagos": 1500, "default": 3500 } }`
+
 ### Orders
 | Method | Endpoint | Purpose | Auth | Body / Params |
 |---|---|---|---|---|
-| POST | `/api/orders` | Place order from cart | User | `shippingAddress{fullName,phone,street,city,state}` |
+| POST | `/api/orders` | Place order from cart | User | `shippingAddress{fullName, phone, street, state, lga}` (`lga` must belong to `state`) |
 | GET | `/api/orders` | My orders | User | Query: `status`, `search`, `from`, `to`, `page`, `limit` |
 | GET | `/api/orders/:id` | Order details (own, or any for admin) | User | `:id` |
-| PATCH | `/api/orders/:id/cancel` | Cancel own pending/paid order | User | `:id` |
+| PATCH | `/api/orders/:id/cancel` | Cancel own order (pending or confirmed) | User | `:id` |
+| GET | `/api/orders/track/:code` | Track an order by its tracking code (the order number, e.g. `ND-1A2B3C4D5E`) | **Public** | `:code` |
 | GET | `/api/orders/admin/all` | All orders | Admin | same query as above |
 | GET | `/api/orders/admin/stats` | Totals and revenue | Admin | — |
-| PATCH | `/api/orders/:id/status` | Update status | Admin | `status`: `processing`, `shipped`, `delivered`, `cancelled` |
+| PATCH | `/api/orders/:id/status` | Update status | Admin | `status`: `confirmed`, `preparing`, `out_for_delivery`, `delivered`, `cancelled` |
 
-Status flow: `pending → paid` (via payment) `→ processing → shipped → delivered`. `cancelled` is allowed before shipping and returns stock.
-Errors: 400 `Your cart is empty`, 400 `Not enough stock for "X"`, 400 `Cannot change order from "pending" to "shipped"`, 404 `Order not found`.
+Pricing: `subtotal` (sum of dishes) + `deliveryFee` (₦1,500 for Lagos, ₦3,500 elsewhere) = `totalAmount`.
+Status flow: `pending → confirmed → preparing → out_for_delivery → delivered`. A successful payment confirms a pending order automatically; the kitchen can also confirm manually (for pay on delivery). `cancelled` is allowed up to `preparing` and returns the portions.
+Public tracking returns status, items, totals, destination (LGA and state) and status history only. Name, phone and street are never exposed.
+Errors: 400 `Your cart is empty`, 400 `Not enough portions of "X" (only N left)`, 400 `Cannot change order from "pending" to "preparing"`, 404 `Order not found`, 404 `No order was found with that tracking code`.
 
 ### Payments (simulated gateway)
 | Method | Endpoint | Purpose | Auth | Body |
@@ -119,7 +131,7 @@ Errors: 400 `Your cart is empty`, 400 `Not enough stock for "X"`, 400 `Cannot ch
 | POST | `/api/payments/confirm` | Settle the payment (stands in for a gateway callback) | User | `reference`, `outcome` (`success` / `failed`) |
 | GET | `/api/payments` | My payments | User | — |
 
-Success (confirm): `data: { payment, order }`. A failed payment can be retried by initiating again.
+Success (confirm): `data: { payment, order }`; the order moves to `confirmed` and `paymentStatus` to `paid`. A failed payment can be retried by initiating again.
 Errors: 400 `This order has already been paid`, 404 `Order not found` / `Payment not found`.
 
 ## Security notes

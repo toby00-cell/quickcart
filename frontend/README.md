@@ -1,4 +1,4 @@
-# QuickCart Frontend
+# Naija Delights Frontend
 
 React (Vite) + React Router + Tailwind CSS + Axios. Talks to the Express API in `../backend`.
 
@@ -15,9 +15,9 @@ In development Vite proxies `/api` to `http://localhost:5001` (see `vite.config.
 | `VITE_API_URL` | Leave empty locally. In production set to the deployed API, e.g. `https://your-api.onrender.com/api` |
 
 ## Pages
-- Public: Home, About, Login, Register, Shop (search, category, price, sort, pagination), Product details
-- Customer (login required): Cart, Checkout, My orders (filter + pagination), Order details (status tracker, payment, cancel)
-- Admin (admin role): Dashboard, Products (add/edit/delete), Categories, Orders (filter, search, update status)
+- Public: Home, About, Login, Register, Menu (search, region, price, sort, pagination), Dish details, Track order (by code, no login)
+- Customer (login required): Cart, Checkout (state/LGA + delivery fee), My orders (filter + pagination), Order details (status tracker, payment, cancel)
+- Admin (admin role): Dashboard, Menu (add/edit/delete dishes), Categories (regions), Orders (filter, search, update status)
 
 Loading spinners show on every API call, and errors are shown as readable messages (never raw Axios errors).
 

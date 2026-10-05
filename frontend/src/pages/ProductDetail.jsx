@@ -26,7 +26,7 @@ export default function ProductDetail() {
     return (
       <div className="mx-auto max-w-3xl px-4 py-12">
         <ErrorMessage message={error} onRetry={reload} />
-        <Link to="/shop" className="btn-secondary mt-4">Back to shop</Link>
+        <Link to="/shop" className="btn-secondary mt-4">Back to menu</Link>
       </div>
     );
 
@@ -47,7 +47,7 @@ export default function ProductDetail() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
-      <Link to="/shop" className="text-sm text-slate-500 hover:text-brand-600">← Back to shop</Link>
+      <Link to="/shop" className="text-sm text-slate-500 hover:text-brand-600">← Back to menu</Link>
       <div className="mt-4 grid gap-8 md:grid-cols-2">
         <ProductImage product={product} className="aspect-square w-full rounded-xl" />
         <div>
@@ -56,7 +56,7 @@ export default function ProductDetail() {
           <p className="mt-3 text-3xl font-bold text-brand-700">{money(product.price)}</p>
           <p className="mt-4 whitespace-pre-line text-slate-600">{product.description || 'No description provided.'}</p>
           <p className={`mt-4 text-sm font-semibold ${out ? 'text-red-600' : 'text-emerald-600'}`}>
-            {out ? 'Out of stock' : `${product.stock} in stock`}
+            {out ? 'Sold out' : `${product.stock} portions available`}
           </p>
 
           {isAdmin ? (
@@ -69,7 +69,7 @@ export default function ProductDetail() {
                 <button className="px-3 py-2 text-lg" onClick={() => setQty(Math.min(product.stock, qty + 1))} disabled={out} aria-label="Increase">+</button>
               </div>
               <button className="btn-primary flex-1" disabled={out || adding} onClick={addToCart}>
-                {adding && <ButtonSpinner />} {out ? 'Out of stock' : adding ? 'Adding...' : 'Add to cart'}
+                {adding && <ButtonSpinner />} {out ? 'Sold out' : adding ? 'Adding...' : 'Add to cart'}
               </button>
             </div>
           )}

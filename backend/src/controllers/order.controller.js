@@ -45,10 +45,33 @@ exports.get = asyncHandler(async (req, res) => {
 exports.cancelMine = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id);
   if (!order || !order.user.equals(req.user._id)) throw new AppError('Order not found', 404);
-  if (!['pending', 'paid'].includes(order.status)) {
-    throw new AppError(`An order that is ${order.status} cannot be cancelled`, 400);
+  if (!['pending', 'confirmed'].includes(order.status)) {
+    throw new AppError(`An order that is ${order.status.replace(/_/g, ' ')} cannot be cancelled`, 400);
   }
   success(res, await orderService.cancel(order), 'Order cancelled');
+});
+
+// Public: look up an order by its tracking code (no login). Exposes no personal details.
+exports.track = asyncHandler(async (req, res) => {
+  const code = req.params.code.trim().toUpperCase();
+  const order = await Order.findOne({ orderNumber: code });
+  if (!order) throw new AppError('No order was found with that tracking code', 404);
+  success(
+    res,
+    {
+      orderNumber: order.orderNumber,
+      status: order.status,
+      paymentStatus: order.paymentStatus,
+      items: order.items.map((i) => ({ name: i.name, quantity: i.quantity })),
+      subtotal: order.subtotal,
+      deliveryFee: order.deliveryFee,
+      totalAmount: order.totalAmount,
+      destination: `${order.shippingAddress.lga}, ${order.shippingAddress.state}`,
+      statusHistory: order.statusHistory,
+      createdAt: order.createdAt,
+    },
+    'Order found'
+  );
 });
 
 // ----- admin -----

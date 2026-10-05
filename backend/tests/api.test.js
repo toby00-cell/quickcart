@@ -13,7 +13,8 @@ let customerToken;
 let category;
 let product;
 
-const address = { fullName: 'Ada Obi', phone: '08012345678', street: '12 Main St', city: 'Abuja', state: 'FCT' };
+const address = { fullName: 'Ada Obi', phone: '08012345678', street: '12 Market Road', state: 'Lagos', lga: 'Ikeja' };
+const abujaAddress = { ...address, state: 'FCT - Abuja', lga: require('../src/data/locations.json')['FCT - Abuja'][0] };
 const auth = (t) => ({ Authorization: `Bearer ${t}` });
 
 beforeAll(async () => {
@@ -64,15 +65,15 @@ describe('Auth', () => {
 
 describe('Products & categories', () => {
   it('blocks customers from admin actions', async () => {
-    const res = await request(app).post('/api/categories').set(auth(customerToken)).send({ name: 'Gadgets' });
+    const res = await request(app).post('/api/categories').set(auth(customerToken)).send({ name: 'Rice Dishes' });
     expect(res.status).toBe(403);
   });
 
   it('lets admin create category and product', async () => {
-    const c = await request(app).post('/api/categories').set(auth(adminToken)).send({ name: 'Gadgets' });
+    const c = await request(app).post('/api/categories').set(auth(adminToken)).send({ name: 'Rice Dishes' });
     expect(c.status).toBe(201);
     category = c.body.data;
-    const p = await request(app).post('/api/products').set(auth(adminToken)).send({ name: 'Smart Watch', description: 'Fitness watch', price: 25000, stock: 5, category: category._id });
+    const p = await request(app).post('/api/products').set(auth(adminToken)).send({ name: 'Jollof Rice & Chicken', description: 'Party jollof with grilled chicken', price: 25000, stock: 5, icon: '🍛', category: category._id });
     expect(p.status).toBe(201);
     product = p.body.data;
   });
@@ -83,7 +84,7 @@ describe('Products & categories', () => {
   });
 
   it('supports search, filter and pagination', async () => {
-    const res = await request(app).get(`/api/products?search=watch&category=${category._id}&page=1&limit=5`);
+    const res = await request(app).get(`/api/products?search=jollof&category=${category._id}&page=1&limit=5`);
     expect(res.status).toBe(200);
     expect(res.body.data.items).toHaveLength(1);
     expect(res.body.data.pagination.total).toBe(1);
@@ -107,17 +108,22 @@ describe('Cart → Order → Payment', () => {
     expect(tooMany.status).toBe(400);
   });
 
-  it('rejects checkout with missing address', async () => {
+  it('rejects checkout with missing address or an LGA that is not in the state', async () => {
     const res = await request(app).post('/api/orders').set(auth(customerToken)).send({});
     expect(res.status).toBe(400);
+    const bad = await request(app).post('/api/orders').set(auth(customerToken)).send({ shippingAddress: { ...address, lga: 'Not A Real LGA' } });
+    expect(bad.status).toBe(400);
   });
 
   it('places an order, reduces stock and empties the cart', async () => {
     const res = await request(app).post('/api/orders').set(auth(customerToken)).send({ shippingAddress: address });
     expect(res.status).toBe(201);
     order = res.body.data;
-    expect(order.totalAmount).toBe(50000);
+    expect(order.subtotal).toBe(50000);
+    expect(order.deliveryFee).toBe(1500); // Lagos
+    expect(order.totalAmount).toBe(51500);
     expect(order.status).toBe('pending');
+    expect(order.orderNumber).toMatch(/^ND-[A-F0-9]{10}$/);
     const p = await request(app).get(`/api/products/${product._id}`);
     expect(p.body.data.stock).toBe(3);
     const cart = await request(app).get('/api/cart').set(auth(customerToken));
@@ -134,7 +140,8 @@ describe('Cart → Order → Payment', () => {
     payment = init2.body.data;
     const ok = await request(app).post('/api/payments/confirm').set(auth(customerToken)).send({ reference: payment.reference, outcome: 'success' });
     expect(ok.status).toBe(200);
-    expect(ok.body.data.order.status).toBe('paid');
+    expect(ok.body.data.order.status).toBe('confirmed');
+    expect(ok.body.data.order.paymentStatus).toBe('paid');
   });
 
   it('prevents paying twice and settling a settled payment', async () => {
@@ -150,8 +157,10 @@ describe('Cart → Order → Payment', () => {
 
   it('lets admin progress status in valid order only', async () => {
     const bad = await request(app).patch(`/api/orders/${order._id}/status`).set(auth(adminToken)).send({ status: 'delivered' });
-    expect(bad.status).toBe(400);
-    for (const status of ['processing', 'shipped', 'delivered']) {
+    expect(bad.status).toBe(400); // cannot skip preparing and out_for_delivery
+    const unknown = await request(app).patch(`/api/orders/${order._id}/status`).set(auth(adminToken)).send({ status: 'teleported' });
+    expect(unknown.status).toBe(400);
+    for (const status of ['preparing', 'out_for_delivery', 'delivered']) {
       const r = await request(app).patch(`/api/orders/${order._id}/status`).set(auth(adminToken)).send({ status });
       expect(r.status).toBe(200);
       expect(r.body.data.status).toBe(status);
@@ -167,12 +176,38 @@ describe('Cart → Order → Payment', () => {
 
   it('restocks when an order is cancelled', async () => {
     await request(app).post('/api/cart/items').set(auth(customerToken)).send({ productId: product._id, quantity: 1 });
-    const o = await request(app).post('/api/orders').set(auth(customerToken)).send({ shippingAddress: address });
+    const o = await request(app).post('/api/orders').set(auth(customerToken)).send({ shippingAddress: abujaAddress });
+    expect(o.body.data.deliveryFee).toBe(3500); // outside Lagos
     const before = (await request(app).get(`/api/products/${product._id}`)).body.data.stock;
     const c = await request(app).patch(`/api/orders/${o.body.data._id}/cancel`).set(auth(customerToken));
     expect(c.status).toBe(200);
     const after = (await request(app).get(`/api/products/${product._id}`)).body.data.stock;
     expect(after).toBe(before + 1);
+  });
+});
+
+describe('Tracking & locations', () => {
+  it('lists delivery states and the fee rule', async () => {
+    const res = await request(app).get('/api/locations');
+    expect(res.status).toBe(200);
+    expect(Object.keys(res.body.data.states)).toHaveLength(37);
+    expect(res.body.data.fees).toEqual({ Lagos: 1500, default: 3500 });
+  });
+
+  it('tracks an order by code without logging in and hides personal details', async () => {
+    const list = await request(app).get('/api/orders/admin/all?status=delivered').set(auth(adminToken));
+    const code = list.body.data.items[0].orderNumber;
+    const res = await request(app).get(`/api/orders/track/${code.toLowerCase()}`);
+    expect(res.status).toBe(200);
+    expect(res.body.data.status).toBe('delivered');
+    expect(res.body.data.destination).toBe('Ikeja, Lagos');
+    expect(JSON.stringify(res.body)).not.toMatch(/08012345678|12 Market Road|Ada Obi/);
+  });
+
+  it('returns 404 for an unknown tracking code', async () => {
+    const res = await request(app).get('/api/orders/track/ND-0000000000');
+    expect(res.status).toBe(404);
+    expect(res.body.message).toBe('No order was found with that tracking code');
   });
 });
 

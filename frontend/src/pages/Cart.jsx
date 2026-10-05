@@ -31,7 +31,7 @@ export default function Cart() {
 
       {cart.items.length === 0 ? (
         <div className="mt-6">
-          <EmptyState title="Your cart is empty" text="Add a few products and they will show up here." actionLabel="Start shopping" to="/shop" />
+          <EmptyState title="Your cart is empty" text="Add a few dishes and they will show up here." actionLabel="View the menu" to="/shop" />
         </div>
       ) : (
         <div className="mt-6 grid gap-6 lg:grid-cols-3">
@@ -65,7 +65,7 @@ export default function Cart() {
             <div className="mt-4 flex justify-between text-sm text-slate-600"><span>Items</span><span>{cart.totalItems}</span></div>
             <div className="mt-2 flex justify-between border-t border-slate-200 pt-3 text-lg font-bold"><span>Total</span><span>{money(cart.totalAmount)}</span></div>
             <Link to="/checkout" className="btn-primary mt-5 w-full">Proceed to checkout</Link>
-            <Link to="/shop" className="btn-secondary mt-2 w-full">Continue shopping</Link>
+            <Link to="/shop" className="btn-secondary mt-2 w-full">Back to menu</Link>
           </aside>
         </div>
       )}

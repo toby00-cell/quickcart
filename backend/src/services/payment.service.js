@@ -35,8 +35,11 @@ const confirm = async (user, { reference, outcome }) => {
     payment.status = 'success';
     payment.paidAt = new Date();
     order.paymentStatus = 'paid';
-    order.status = 'paid';
-    order.statusHistory.push({ status: 'paid' });
+    // a paid order is automatically confirmed by the kitchen
+    if (order.status === 'pending') {
+      order.status = 'confirmed';
+      order.statusHistory.push({ status: 'confirmed' });
+    }
   } else {
     payment.status = 'failed';
     if (order.paymentStatus !== 'paid') order.paymentStatus = 'failed';

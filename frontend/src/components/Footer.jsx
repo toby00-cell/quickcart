@@ -7,7 +7,8 @@ export default function Footer() {
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-6 text-sm text-slate-500 sm:flex-row">
         <p>© {new Date().getFullYear()} {BRAND}. All rights reserved.</p>
         <div className="flex gap-5">
-          <Link to="/shop" className="hover:text-brand-600">Shop</Link>
+          <Link to="/shop" className="hover:text-brand-600">Menu</Link>
+          <Link to="/track" className="hover:text-brand-600">Track order</Link>
           <Link to="/about" className="hover:text-brand-600">About</Link>
           <Link to="/login" className="hover:text-brand-600">Log in</Link>
         </div>

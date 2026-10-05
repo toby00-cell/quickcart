@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const TOKEN_KEY = 'quickcart_token';
+export const TOKEN_KEY = 'naija_delights_token';
 
 const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || '/api', timeout: 15000 });
 

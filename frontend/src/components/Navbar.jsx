@@ -28,7 +28,8 @@ export default function Navbar() {
         </Link>
 
         <nav className="hidden items-center gap-6 md:flex">
-          <NavLink to="/shop" className={linkClass}>Shop</NavLink>
+          <NavLink to="/shop" className={linkClass}>Menu</NavLink>
+          <NavLink to="/track" className={linkClass}>Track order</NavLink>
           <NavLink to="/about" className={linkClass}>About</NavLink>
           {user && !isAdmin && <NavLink to="/orders" className={linkClass}>My orders</NavLink>}
           {isAdmin && <NavLink to="/admin" className={linkClass}>Admin</NavLink>}
@@ -72,7 +73,8 @@ export default function Navbar() {
 
       {open && (
         <div className="space-y-1 border-t border-slate-200 bg-white px-4 py-3 md:hidden">
-          <NavLink to="/shop" className="block py-2 text-sm font-medium" onClick={close}>Shop</NavLink>
+          <NavLink to="/shop" className="block py-2 text-sm font-medium" onClick={close}>Menu</NavLink>
+          <NavLink to="/track" className="block py-2 text-sm font-medium" onClick={close}>Track order</NavLink>
           <NavLink to="/about" className="block py-2 text-sm font-medium" onClick={close}>About</NavLink>
           {user && !isAdmin && <NavLink to="/orders" className="block py-2 text-sm font-medium" onClick={close}>My orders</NavLink>}
           {isAdmin && <NavLink to="/admin" className="block py-2 text-sm font-medium" onClick={close}>Admin</NavLink>}

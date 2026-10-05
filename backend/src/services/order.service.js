@@ -2,24 +2,23 @@ const Order = require('../models/Order');
 const Product = require('../models/Product');
 const Cart = require('../models/Cart');
 const AppError = require('../utils/AppError');
+const { getDeliveryFee } = require('../utils/delivery');
 
-// Allowed admin transitions
+// Allowed status transitions (admin)
 const TRANSITIONS = {
-  pending: ['cancelled'],
-  paid: ['processing', 'cancelled'],
-  processing: ['shipped', 'cancelled'],
-  shipped: ['delivered'],
+  pending: ['confirmed', 'cancelled'],
+  confirmed: ['preparing', 'cancelled'],
+  preparing: ['out_for_delivery', 'cancelled'],
+  out_for_delivery: ['delivered'],
   delivered: [],
   cancelled: [],
 };
 
 const restock = async (items) => {
-  await Promise.all(
-    items.map((i) => Product.updateOne({ _id: i.product }, { $inc: { stock: i.quantity } }))
-  );
+  await Promise.all(items.map((i) => Product.updateOne({ _id: i.product }, { $inc: { stock: i.quantity } })));
 };
 
-// Create an order from the user's cart. Stock is reserved atomically per product;
+// Create an order from the user's cart. Portions are reserved atomically per dish;
 // if any line fails, everything reserved so far is put back.
 const createFromCart = async (userId, shippingAddress) => {
   const cart = await Cart.findOne({ user: userId });
@@ -36,9 +35,9 @@ const createFromCart = async (userId, shippingAddress) => {
       );
       if (!product) {
         const p = await Product.findById(item.product);
-        const name = p ? p.name : 'A product in your cart';
+        const name = p ? p.name : 'A dish in your cart';
         throw new AppError(
-          p && p.isActive ? `Not enough stock for "${name}" (only ${p.stock} left)` : `"${name}" is no longer available`,
+          p && p.isActive ? `Not enough portions of "${name}" (only ${p.stock} left)` : `"${name}" is no longer available`,
           400
         );
       }
@@ -52,11 +51,14 @@ const createFromCart = async (userId, shippingAddress) => {
       });
     }
 
-    const totalAmount = Number(lines.reduce((s, l) => s + l.subtotal, 0).toFixed(2));
+    const subtotal = Number(lines.reduce((s, l) => s + l.subtotal, 0).toFixed(2));
+    const deliveryFee = getDeliveryFee(shippingAddress.state);
     const order = await Order.create({
       user: userId,
       items: lines,
-      totalAmount,
+      subtotal,
+      deliveryFee,
+      totalAmount: subtotal + deliveryFee,
       shippingAddress,
       statusHistory: [{ status: 'pending' }],
     });
@@ -71,8 +73,8 @@ const createFromCart = async (userId, shippingAddress) => {
 };
 
 const cancel = async (order) => {
-  if (['shipped', 'delivered', 'cancelled'].includes(order.status)) {
-    throw new AppError(`An order that is ${order.status} cannot be cancelled`, 400);
+  if (['out_for_delivery', 'delivered', 'cancelled'].includes(order.status)) {
+    throw new AppError(`An order that is ${order.status.replace(/_/g, ' ')} cannot be cancelled`, 400);
   }
   await restock(order.items);
   order.status = 'cancelled';

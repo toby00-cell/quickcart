@@ -2,10 +2,10 @@ import { Link } from 'react-router-dom';
 import { BRAND } from '../config';
 
 const BLOCKS = [
-  { q: 'What is this?', a: `${BRAND} is an online store with a complete order system: products, cart, checkout, payment and order tracking.` },
-  { q: 'Who is it for?', a: 'Shoppers who want a simple way to buy and follow their orders, and store owners who need one place to manage products and orders.' },
-  { q: 'What problem does it solve?', a: 'Orders get lost between stock, payment and delivery. Here stock is reserved when an order is placed, payment status is recorded, and every status change is visible to both the customer and the store.' },
-  { q: 'How do I use it?', a: 'Customers: create an account, add products to the cart, check out, pay and watch the status on the order page. Admins: log in, manage products and categories, then move orders through processing, shipped and delivered.' },
+  { q: 'What is this?', a: `${BRAND} is a food ordering and delivery app for Nigerian meals. Customers browse the menu, order, pay and track delivery. The kitchen team manages dishes and moves each order along.` },
+  { q: 'Who is it for?', a: 'Hungry customers anywhere in Nigeria who want home-style meals delivered, and restaurant staff who need one place to manage the menu and orders.' },
+  { q: 'What problem does it solve?', a: 'Phone-call orders get missed and nobody knows where a meal is. Here every order has a tracking code, a recorded payment status and a clear step-by-step status from kitchen to doorstep.' },
+  { q: 'How do I use it?', a: 'Customers: create an account, add dishes to the cart, enter your state, LGA and address, pay, then watch your order status or track it with its code. Admins: log in, manage dishes and regions, and update each order as it is confirmed, prepared, sent out and delivered.' },
 ];
 
 export default function About() {
@@ -21,7 +21,7 @@ export default function About() {
         ))}
       </div>
       <div className="mt-8 flex gap-3">
-        <Link to="/shop" className="btn-primary">Browse products</Link>
+        <Link to="/shop" className="btn-primary">See the menu</Link>
         <Link to="/register" className="btn-secondary">Create an account</Link>
       </div>
     </div>

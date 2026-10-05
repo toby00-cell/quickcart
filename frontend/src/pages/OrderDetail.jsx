@@ -4,34 +4,9 @@ import api, { getErrorMessage, unwrap } from '../api/client';
 import useFetch from '../hooks/useFetch';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import OrderTracker from '../components/OrderTracker';
 import { ButtonSpinner, ErrorMessage, Spinner, StatusBadge } from '../components/ui';
 import { dateTime, money } from '../utils/format';
-
-const STEPS = ['pending', 'paid', 'processing', 'shipped', 'delivered'];
-
-function Tracker({ order }) {
-  if (order.status === 'cancelled') {
-    return <div className="rounded-lg bg-slate-100 p-4 text-sm font-medium text-slate-700">This order was cancelled.</div>;
-  }
-  const current = STEPS.indexOf(order.status);
-  const label = { pending: 'Placed', paid: 'Paid', processing: 'Processing', shipped: 'Shipped', delivered: 'Delivered' };
-  return (
-    <ol className="flex items-start">
-      {STEPS.map((s, i) => (
-        <li key={s} className="flex flex-1 flex-col items-center text-center">
-          <div className="flex w-full items-center">
-            <div className={`h-1 flex-1 ${i === 0 ? 'opacity-0' : i <= current ? 'bg-brand-600' : 'bg-slate-200'}`} />
-            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${i <= current ? 'bg-brand-600 text-white' : 'bg-slate-200 text-slate-500'}`}>
-              {i < current || order.status === 'delivered' ? '✓' : i + 1}
-            </div>
-            <div className={`h-1 flex-1 ${i === STEPS.length - 1 ? 'opacity-0' : i < current ? 'bg-brand-600' : 'bg-slate-200'}`} />
-          </div>
-          <span className={`mt-2 text-xs font-medium ${i <= current ? 'text-slate-800' : 'text-slate-400'}`}>{label[s]}</span>
-        </li>
-      ))}
-    </ol>
-  );
-}
 
 // Simulated payment gateway: initiate -> confirm (success / failed)
 function PaymentPanel({ order, onDone }) {
@@ -58,7 +33,7 @@ function PaymentPanel({ order, onDone }) {
     setError('');
     try {
       await unwrap(api.post('/payments/confirm', { reference: payment.reference, outcome }));
-      outcome === 'success' ? toast.success('Payment successful. Thank you!') : toast.error('Payment failed. You can try again.');
+      outcome === 'success' ? toast.success('Payment successful. The kitchen has your order!') : toast.error('Payment failed. You can try again.');
       setPayment(null);
       onDone();
     } catch (err) {
@@ -121,12 +96,12 @@ export default function OrderDetail() {
       </div>
     );
 
-  const canPay = !isAdmin && order.paymentStatus !== 'paid' && order.paymentStatus !== 'refunded' && order.status === 'pending';
-  const canCancel = !isAdmin && ['pending', 'paid'].includes(order.status);
+  const canPay = !isAdmin && ['unpaid', 'failed'].includes(order.paymentStatus) && ['pending', 'confirmed'].includes(order.status);
+  const canCancel = !isAdmin && ['pending', 'confirmed'].includes(order.status);
   const a = order.shippingAddress;
 
   const cancel = async () => {
-    if (!window.confirm('Cancel this order? Items go back into stock.')) return;
+    if (!window.confirm('Cancel this order?')) return;
     setCancelling(true);
     try {
       await api.patch(`/orders/${order._id}/cancel`);
@@ -145,18 +120,24 @@ export default function OrderDetail() {
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-extrabold">{order.orderNumber}</h1>
-          <p className="text-sm text-slate-500">Placed {dateTime(order.createdAt)}{isAdmin && order.user ? ` · ${order.user.name} (${order.user.email})` : ''}</p>
+          <p className="text-sm text-slate-500">
+            Placed {dateTime(order.createdAt)}{isAdmin && order.user ? ` · ${order.user.name} (${order.user.email})` : ''}
+          </p>
+          <p className="text-xs text-slate-400">
+            Tracking code: <span className="font-mono">{order.orderNumber}</span> ·{' '}
+            <Link to={`/track/${order.orderNumber}`} className="text-brand-600 hover:underline">public tracking page</Link>
+          </p>
         </div>
         <div className="flex items-center gap-2"><StatusBadge status={order.status} /><StatusBadge status={order.paymentStatus} /></div>
       </div>
 
-      <div className="card mt-6 p-6"><Tracker order={order} /></div>
+      <div className="card mt-6 p-6"><OrderTracker status={order.status} /></div>
 
       {canPay && <div className="mt-6"><PaymentPanel order={order} onDone={reload} /></div>}
 
       <div className="mt-6 grid gap-6 md:grid-cols-3">
         <div className="card p-5 md:col-span-2">
-          <h2 className="font-semibold">Items</h2>
+          <h2 className="font-semibold">Your meal</h2>
           <ul className="mt-3 divide-y divide-slate-100">
             {order.items.map((i) => (
               <li key={i.product} className="flex justify-between gap-3 py-3 text-sm">
@@ -165,18 +146,22 @@ export default function OrderDetail() {
               </li>
             ))}
           </ul>
-          <div className="mt-2 flex justify-between border-t border-slate-200 pt-3 text-lg font-bold"><span>Total</span><span>{money(order.totalAmount)}</span></div>
+          <div className="mt-2 space-y-1 border-t border-slate-200 pt-3 text-sm">
+            <div className="flex justify-between text-slate-600"><span>Subtotal</span><span>{money(order.subtotal)}</span></div>
+            <div className="flex justify-between text-slate-600"><span>Delivery</span><span>{money(order.deliveryFee)}</span></div>
+            <div className="flex justify-between pt-1 text-lg font-bold"><span>Total</span><span>{money(order.totalAmount)}</span></div>
+          </div>
         </div>
         <div className="space-y-6">
           <div className="card p-5 text-sm">
             <h2 className="font-semibold">Delivery</h2>
-            <p className="mt-2 text-slate-600">{a.fullName}<br />{a.street}<br />{a.city}, {a.state}<br />{a.phone}</p>
+            <p className="mt-2 text-slate-600">{a.fullName}<br />{a.street}<br />{a.lga}, {a.state}<br />{a.phone}</p>
           </div>
           <div className="card p-5 text-sm">
             <h2 className="font-semibold">History</h2>
             <ul className="mt-2 space-y-1.5 text-slate-600">
               {[...order.statusHistory].reverse().map((h, i) => (
-                <li key={i} className="flex justify-between"><span className="capitalize">{h.status}</span><span className="text-slate-400">{dateTime(h.at)}</span></li>
+                <li key={i} className="flex justify-between gap-2"><span className="capitalize">{h.status.replace(/_/g, ' ')}</span><span className="text-slate-400">{dateTime(h.at)}</span></li>
               ))}
             </ul>
           </div>

@@ -9,7 +9,7 @@ export default function AdminLayout() {
       <h1 className="text-3xl font-extrabold">Admin</h1>
       <nav className="mt-4 flex gap-2 overflow-x-auto">
         <NavLink end to="/admin" className={link}>Dashboard</NavLink>
-        <NavLink to="/admin/products" className={link}>Products</NavLink>
+        <NavLink to="/admin/products" className={link}>Menu</NavLink>
         <NavLink to="/admin/categories" className={link}>Categories</NavLink>
         <NavLink to="/admin/orders" className={link}>Orders</NavLink>
       </nav>

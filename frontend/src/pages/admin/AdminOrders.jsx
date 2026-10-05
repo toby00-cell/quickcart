@@ -7,9 +7,9 @@ import { useToast } from '../../context/ToastContext';
 import { EmptyState, ErrorMessage, Pagination, Spinner, StatusBadge } from '../../components/ui';
 import { date, money } from '../../utils/format';
 
-const STATUSES = ['pending', 'paid', 'processing', 'shipped', 'delivered', 'cancelled'];
+const STATUSES = ['pending', 'confirmed', 'preparing', 'out_for_delivery', 'delivered', 'cancelled'];
 // mirrors the backend transition rules
-const NEXT = { pending: ['cancelled'], paid: ['processing', 'cancelled'], processing: ['shipped', 'cancelled'], shipped: ['delivered'], delivered: [], cancelled: [] };
+const NEXT = { pending: ['confirmed', 'cancelled'], confirmed: ['preparing', 'cancelled'], preparing: ['out_for_delivery', 'cancelled'], out_for_delivery: ['delivered'], delivered: [], cancelled: [] };
 
 export default function AdminOrders() {
   const toast = useToast();
@@ -29,7 +29,7 @@ export default function AdminOrders() {
     setBusy(order._id);
     try {
       await api.patch(`/orders/${order._id}/status`, { status: next });
-      toast.success(`Order marked ${next}`);
+      toast.success(`Order marked ${next.replace(/_/g, ' ')}`);
       reload();
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -44,7 +44,7 @@ export default function AdminOrders() {
         <input className="input max-w-xs" placeholder="Search order number..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
         <select className="input w-auto" value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
           <option value="">All statuses</option>
-          {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+          {STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
         </select>
       </div>
 
@@ -71,7 +71,7 @@ export default function AdminOrders() {
                         {NEXT[o.status].length === 0 ? <span className="text-xs text-slate-400">Final</span> : (
                           <select className="input w-auto py-1" value="" disabled={busy === o._id} onChange={(e) => change(o, e.target.value)}>
                             <option value="">Move to...</option>
-                            {NEXT[o.status].map((s) => <option key={s} value={s}>{s}</option>)}
+                            {NEXT[o.status].map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
                           </select>
                         )}
                       </td>

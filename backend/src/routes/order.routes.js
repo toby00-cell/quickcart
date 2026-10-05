@@ -4,6 +4,9 @@ const { protect, authorize } = require('../middleware/auth');
 const validate = require('../middleware/validate');
 const s = require('../validators/schemas');
 
+// public tracking (declared before the login wall)
+router.get('/track/:code', validate(s.trackParam, 'params'), c.track);
+
 router.use(protect);
 
 // admin (declared before '/:id' so they are not captured by it)

@@ -1,1 +1,1 @@
-export const BRAND = 'QuickCart';
+export const BRAND = 'Naija Delights';

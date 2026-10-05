@@ -1,4 +1,5 @@
 const { z } = require('zod');
+const { isValidLocation } = require('../utils/delivery');
 
 const objectId = z.string().regex(/^[a-f\d]{24}$/i, 'Invalid ID');
 
@@ -43,6 +44,7 @@ const productBase = z.object({
   price: z.number({ required_error: 'Price is required', invalid_type_error: 'Price must be a number' }).positive('Price must be greater than 0'),
   stock: z.number({ invalid_type_error: 'Stock must be a number' }).int('Stock must be a whole number').min(0, 'Stock cannot be negative'),
   category: objectId,
+  icon: z.string().trim().max(8, 'Icon must be a single emoji').optional(),
   imageUrl: z.string().trim().url('Image URL must be a valid URL').optional().or(z.literal('')),
   isActive: z.boolean().optional(),
 });
@@ -68,17 +70,25 @@ const cartUpdate = z.object({
 });
 
 const checkout = z.object({
-  shippingAddress: z.object({
-    fullName: z.string({ required_error: 'Full name is required' }).trim().min(2),
-    phone: z.string({ required_error: 'Phone is required' }).trim().min(7).max(20),
-    street: z.string({ required_error: 'Street is required' }).trim().min(2),
-    city: z.string({ required_error: 'City is required' }).trim().min(2),
-    state: z.string({ required_error: 'State is required' }).trim().min(2),
-  }),
+  shippingAddress: z
+    .object({
+      fullName: z.string({ required_error: 'Full name is required' }).trim().min(2, 'Enter the recipient name'),
+      phone: z.string({ required_error: 'Phone is required' }).trim().min(7, 'Enter a valid phone number').max(20),
+      street: z.string({ required_error: 'Street address is required' }).trim().min(5, 'Enter the full street address').max(300),
+      state: z.string({ required_error: 'State is required' }).trim(),
+      lga: z.string({ required_error: 'LGA is required' }).trim(),
+    })
+    .superRefine((a, ctx) => {
+      if (!isValidLocation(a.state, a.lga)) {
+        ctx.addIssue({ code: 'custom', path: ['lga'], message: 'Choose a valid state and LGA' });
+      }
+    }),
 });
 
+const trackParam = z.object({ code: z.string().trim().min(5, 'Enter a tracking code').max(40) });
+
 const orderQuery = z.object({
-  status: z.enum(['pending', 'paid', 'processing', 'shipped', 'delivered', 'cancelled']).optional(),
+  status: z.enum(['pending', 'confirmed', 'preparing', 'out_for_delivery', 'delivered', 'cancelled']).optional(),
   search: z.string().trim().max(60).optional(),
   from: z.coerce.date({ invalid_type_error: 'Invalid from date' }).optional(),
   to: z.coerce.date({ invalid_type_error: 'Invalid to date' }).optional(),
@@ -87,8 +97,8 @@ const orderQuery = z.object({
 });
 
 const orderStatus = z.object({
-  status: z.enum(['processing', 'shipped', 'delivered', 'cancelled'], {
-    errorMap: () => ({ message: 'Status must be one of: processing, shipped, delivered, cancelled' }),
+  status: z.enum(['confirmed', 'preparing', 'out_for_delivery', 'delivered', 'cancelled'], {
+    errorMap: () => ({ message: 'Status must be one of: confirmed, preparing, out_for_delivery, delivered, cancelled' }),
   }),
 });
 
@@ -105,5 +115,5 @@ const paymentConfirm = z.object({
 module.exports = {
   idParam, productIdParam, register, login, updateProfile, category,
   productCreate, productUpdate, productQuery, cartAdd, cartUpdate,
-  checkout, orderQuery, orderStatus, paymentInitiate, paymentConfirm,
+  checkout, trackParam, orderQuery, orderStatus, paymentInitiate, paymentConfirm,
 };

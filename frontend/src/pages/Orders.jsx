@@ -5,7 +5,7 @@ import useFetch from '../hooks/useFetch';
 import { EmptyState, ErrorMessage, Pagination, Spinner, StatusBadge } from '../components/ui';
 import { date, money } from '../utils/format';
 
-const STATUSES = ['pending', 'paid', 'processing', 'shipped', 'delivered', 'cancelled'];
+const STATUSES = ['pending', 'confirmed', 'preparing', 'out_for_delivery', 'delivered', 'cancelled'];
 
 export default function Orders() {
   const [status, setStatus] = useState('');
@@ -21,7 +21,7 @@ export default function Orders() {
         <h1 className="text-3xl font-extrabold">My orders</h1>
         <select className="input w-auto" value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
           <option value="">All statuses</option>
-          {STATUSES.map((s) => <option key={s} value={s} className="capitalize">{s}</option>)}
+          {STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
         </select>
       </div>
 
@@ -31,7 +31,7 @@ export default function Orders() {
         ) : error ? (
           <ErrorMessage message={error} onRetry={reload} />
         ) : data.items.length === 0 ? (
-          <EmptyState title="No orders yet" text="Orders you place will appear here." actionLabel="Start shopping" to="/shop" />
+          <EmptyState title="No orders yet" text="Orders you place will appear here." actionLabel="View the menu" to="/shop" />
         ) : (
           <>
             <div className="space-y-3">
