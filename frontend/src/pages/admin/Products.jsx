@@ -70,7 +70,7 @@ function ProductForm({ product, categories, onClose, onSaved }) {
           </select>
         </Field>
         <Field label="Emoji icon (optional)"><input className="input" maxLength="8" placeholder="🍲" value={form.icon} onChange={set('icon')} /></Field>
-        <Field label="Image URL (optional)"><input className="input" placeholder="https://..." value={form.imageUrl} onChange={set('imageUrl')} /></Field>
+        <Field label="Image (optional)"><input className="input" placeholder="/images/dish.jpg or https://..." value={form.imageUrl} onChange={set('imageUrl')} /></Field>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} /> Visible in the shop</label>
         <div className="flex justify-end gap-2">
           <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>

@@ -13,22 +13,22 @@ const categories = [
   { name: 'Hausa', description: 'Northern favourites, from tuwo to suya' },
 ];
 
-// [name, description, price, icon]
+// [name, description, price, icon, image file in frontend/public/images]
 const menu = {
   Yoruba: [
-    ['Amala & Ewedu with Gbegiri', 'Soft amala with ewedu and gbegiri soup', 3500, '🍲'],
-    ['Ofada Rice with Ayamase Sauce', 'Local ofada rice with spicy green pepper stew', 4500, '🍱'],
-    ['Efo Riro with Beef & Fish', 'Rich vegetable stew with assorted meat and fish', 4000, '🥘'],
+    ['Amala & Ewedu with Gbegiri', 'Soft amala with ewedu and gbegiri soup', 3500, '🍲', 'amala-ewedu-gbegiri.jpg'],
+    ['Ofada Rice with Ayamase Sauce', 'Local ofada rice with spicy green pepper stew', 4500, '🍱', 'ofada-rice-ayamase.jpg'],
+    ['Efo Riro with Beef & Fish', 'Rich vegetable stew with assorted meat and fish', 4000, '🥘', 'efo-riro.jpg'],
   ],
   Igbo: [
-    ['Ofe Nsala (White Soup) & Pounded Yam', 'Peppery white soup with pounded yam', 5000, '🍲'],
-    ['Abacha & Ugba (African Salad)', 'Shredded cassava with oil bean and garnishes', 3000, '🥗'],
-    ['Ofe Owerri & Garri', 'Vegetable soup from Owerri served with garri', 4800, '🍲'],
+    ['Ofe Nsala (White Soup) & Pounded Yam', 'Peppery white soup with pounded yam', 5000, '🍲', 'ofe-nsala.jpg'],
+    ['Abacha & Ugba (African Salad)', 'Shredded cassava with oil bean and garnishes', 3000, '🥗', 'abacha-ugba.jpg'],
+    ['Ofe Owerri & Garri', 'Vegetable soup from Owerri served with garri', 4800, '🍲', 'ofe-owerri.jpg'],
   ],
   Hausa: [
-    ['Tuwon Shinkafa & Miyan Kuka', 'Rice tuwo with baobab leaf soup', 3200, '🫓'],
-    ['Suya (Beef Skewers)', 'Spicy grilled beef skewers with yaji', 2500, '🍢'],
-    ['Miyan Taushe & Masa', 'Pumpkin soup with rice cakes', 3800, '🍲'],
+    ['Tuwon Shinkafa & Miyan Kuka', 'Rice tuwo with baobab leaf soup', 3200, '🫓', 'tuwo-shinkafa-miyan-kuka.jpg'],
+    ['Suya (Beef Skewers)', 'Spicy grilled beef skewers with yaji', 2500, '🍢', 'suya.jpg'],
+    ['Miyan Taushe & Masa', 'Pumpkin soup with rice cakes', 3800, '🍲', 'miyan-taushe-masa.jpg'],
   ],
 };
 
@@ -46,8 +46,8 @@ const PORTIONS = 100;
   const cats = await Category.insertMany(categories);
   const docs = [];
   cats.forEach((c) =>
-    (menu[c.name] || []).forEach(([name, description, price, icon]) =>
-      docs.push({ name, description, price, icon, stock: PORTIONS, category: c._id })
+    (menu[c.name] || []).forEach(([name, description, price, icon, image]) =>
+      docs.push({ name, description, price, icon, imageUrl: `/images/${image}`, stock: PORTIONS, category: c._id })
     )
   );
   await Product.insertMany(docs);

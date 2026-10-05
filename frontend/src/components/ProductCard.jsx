@@ -1,9 +1,19 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { money } from '../utils/format';
 
 export function ProductImage({ product, className = '' }) {
-  if (product.imageUrl) {
-    return <img src={product.imageUrl} alt={product.name} className={`object-cover ${className}`} loading="lazy" />;
+  const [failed, setFailed] = useState(false);
+  if (product.imageUrl && !failed) {
+    return (
+      <img
+        src={product.imageUrl}
+        alt={product.name}
+        className={`object-cover ${className}`}
+        loading="lazy"
+        onError={() => setFailed(true)}
+      />
+    );
   }
   return (
     <div className={`flex items-center justify-center bg-gradient-to-br from-amber-100 to-orange-50 text-6xl ${className}`}>

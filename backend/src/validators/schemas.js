@@ -45,7 +45,12 @@ const productBase = z.object({
   stock: z.number({ invalid_type_error: 'Stock must be a number' }).int('Stock must be a whole number').min(0, 'Stock cannot be negative'),
   category: objectId,
   icon: z.string().trim().max(8, 'Icon must be a single emoji').optional(),
-  imageUrl: z.string().trim().url('Image URL must be a valid URL').optional().or(z.literal('')),
+  imageUrl: z
+    .string()
+    .trim()
+    .regex(/^(https?:\/\/\S+|\/\S+)$/, 'Image must be a link (https://...) or a path like /images/dish.jpg')
+    .optional()
+    .or(z.literal('')),
   isActive: z.boolean().optional(),
 });
 const productCreate = productBase;
