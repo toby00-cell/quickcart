@@ -1,6 +1,6 @@
 # Naija Delights — Backend API
 
-Food ordering and delivery API. Node.js + Express + MongoDB (Mongoose). Part of the TS Academy capstone MVP.
+Built by **Group 82** (TS Academy Capstone). Food ordering and delivery API. Node.js + Express + MongoDB (Mongoose). Part of the TS Academy capstone MVP.
 
 **Features:** register/login (JWT, bcrypt), customer/admin roles, regions (categories) and dishes (CRUD, search, filter, pagination), cart, checkout with Nigerian state/LGA delivery and a delivery fee, atomic portion reservation, simulated payments, public order tracking by code, admin order management and stats.
 

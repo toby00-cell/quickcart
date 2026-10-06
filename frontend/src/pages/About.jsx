@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { BRAND } from '../config';
+import { BRAND, GROUP } from '../config';
 
 const BLOCKS = [
   { q: 'What is this?', a: `${BRAND} is a food ordering and delivery app for Nigerian meals. Customers browse the menu, order, pay and track delivery. The kitchen team manages dishes and moves each order along.` },
@@ -20,7 +20,8 @@ export default function About() {
           </div>
         ))}
       </div>
-      <div className="mt-8 flex gap-3">
+      <p className="mt-8 text-sm text-slate-500">Built by {GROUP} as a full-stack capstone project for TS Academy.</p>
+      <div className="mt-4 flex gap-3">
         <Link to="/shop" className="btn-primary">See the menu</Link>
         <Link to="/register" className="btn-secondary">Create an account</Link>
       </div>

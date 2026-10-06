@@ -1,5 +1,7 @@
 # Naija Delights Frontend
 
+Built by **Group 82** (TS Academy Capstone).
+
 React (Vite) + React Router + Tailwind CSS + Axios. Talks to the Express API in `../backend`.
 
 ## Run locally
